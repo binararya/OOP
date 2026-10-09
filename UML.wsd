@@ -1,0 +1,153 @@
+@startuml SIMASTER_DTETI
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam linetype ortho
+left to right direction
+
+' ==================== ABSTRACTION + INHERITANCE ====================
+abstract class User {
+  # niuOrNip : string
+  # nama : string
+  # email : string
+  # prodi : string
+  --
+  + {abstract} tampilkanDashboard() : void
+  + {abstract} tampilkanMenu() : void
+  + login() : bool
+  + logout() : void
+}
+
+class Mahasiswa {
+  - ipsTerakhir : double
+  - ipk : double
+  - maxSKS : int
+  - daftarKRS : List<KRS>
+  - transkrip : List<Nilai>
+  --
+  + daftarMataKuliah(kelas : Kelas) : bool
+  + hitungMaxSKS() : int
+  + cekPrasyarat(mk : MataKuliah) : bool
+  + lihatTranskrip() : void
+  + submitTugas(tugas : Tugas, file : string) : bool
+  + tampilkanDashboard() : void
+  + tampilkanMenu() : void
+}
+
+class Dosen {
+  - nip : string
+  - daftarKelasDiampu : List<Kelas>
+  --
+  + buatPengumuman(kelas : Kelas, isi : string) : void
+  + buatTugas(kelas : Kelas, judul : string, deadline : Date, bobot : double) : void
+  + inputNilai(mahasiswa : Mahasiswa, komponen : string, skor : double) : void
+  + updateKehadiran(mahasiswa : Mahasiswa, pertemuan : int, hadir : bool) : void
+  + tampilkanDashboard() : void
+  + tampilkanMenu() : void
+}
+
+User <|-- Mahasiswa
+User <|-- Dosen
+
+' ==================== ENTITY UTAMA ====================
+class MataKuliah {
+  - kodeMK : string
+  - namaMK : string
+  - sks : int
+  - semester : int
+  - prasyarat : List<MataKuliah>
+  --
+  + getKode() : string
+  + getSKS() : int
+  + getPrasyarat() : List<MataKuliah>
+}
+
+class Kurikulum {
+  - prodi : string
+  - petaSemester : Map<int, List<MataKuliah>>
+  --
+  + getMataKuliahSemester(sem : int) : List<MataKuliah>
+  + cekPrasyarat(mhs : Mahasiswa, mk : MataKuliah) : bool
+}
+
+class Kelas {
+  - idKelas : string
+  - mataKuliah : MataKuliah
+  - dosenPengampu : Dosen
+  - semester : string
+  - kuota : int
+  - jadwal : string
+  - daftarMahasiswa : List<Mahasiswa>
+  - daftarTugas : List<Tugas>
+  - rekapKehadiran : Map<Mahasiswa, double>
+  --
+  + tambahMahasiswa(mhs : Mahasiswa) : bool
+  + hitungPersentaseKehadiran(mhs : Mahasiswa) : double
+  + tambahTugas(tugas : Tugas) : void
+}
+
+class KRS {
+  - mahasiswa : Mahasiswa
+  - kelas : Kelas
+  - status : string
+  - semester : string
+  --
+  + validasi() : bool
+}
+
+class Nilai {
+  - mahasiswa : Mahasiswa
+  - kelas : Kelas
+  - skorAngka : double
+  - nilaiHuruf : string
+  - bobot : double
+  - komponen : Map<string, double>
+  --
+  + konversiHuruf() : string
+  + hitungNilaiAkhir() : double
+  + updateKomponen(nama : string, skor : double) : void
+}
+
+class Tugas {
+  - idTugas : string
+  - judul : string
+  - deskripsi : string
+  - deadline : Date
+  - bobot : double
+  - kelas : Kelas
+  - submission : Map<Mahasiswa, string>
+  --
+  + submit(mhs : Mahasiswa, filePath : string) : bool
+  + isDeadlineLewat() : bool
+}
+
+class Pengumuman {
+  - id : string
+  - isi : string
+  - tanggal : Date
+  - pembuat : Dosen
+  - kelas : Kelas
+  --
+  + publikasikan() : void
+}
+
+' ==================== RELATIONSHIPS ====================
+Kurikulum "1" o-- "*" MataKuliah : mengatur
+
+Mahasiswa "1" --> "*" KRS : memiliki
+KRS "*" --> "1" Kelas : mendaftar
+
+Kelas "*" --> "1" MataKuliah : instance dari
+Kelas "*" --> "1" Dosen : diampu oleh
+Kelas "1" --> "*" Mahasiswa : berisi
+Kelas "1" --> "*" Tugas : memiliki
+Kelas "1" --> "*" Pengumuman : memiliki
+
+Mahasiswa "1" --> "*" Nilai : memiliki
+Nilai "*" --> "1" Kelas : untuk
+
+Tugas "*" --> "1" Kelas : milik
+Pengumuman "*" --> "1" Dosen : dibuat oleh
+
+
+@enduml
